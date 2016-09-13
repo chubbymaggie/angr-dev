@@ -13,7 +13,7 @@ function red
 RED=$(tput setaf 1 2>/dev/null)
 GREEN=$(tput setaf 2 2>/dev/null)
 NORMAL=$(tput sgr0 2>/dev/null)
-right_align() {
+center_align() {
 	MSG="$1"
 	PADDING="$2"
 	COLOR="$3"
@@ -50,19 +50,31 @@ function careful_pull
 	fi
 }
 
+function success
+{
+	center_align "SUCCESS" "-"
+	SUCCESSFUL="$SUCCESSFUL $1"
+}
+
+function fail
+{
+	center_align "FAILURE (return code $2)" "-" "$RED"
+	FAILED="$FAILED $1"
+}
+
 function doit
 {
 	DIR=$1
 	shift
 
 	cd $DIR
-	right_align "RUNNING ON: $DIR" "#"
+	center_align "RUNNING ON: $DIR" "#"
 
 	if [ "$1" == "CAREFUL_PULL" ]
 	then
-		careful_pull && right_align "SUCCESS" "-" || right_align "FAILURE (return code $?)" "-" "$RED"
+		careful_pull && success $DIR || fail $DIR $?
 	else
-		git "$@" && right_align "SUCCESS" "-" || right_align "FAILURE (return code $?)" "-" "$RED"
+		git "$@" && success $DIR || fail $DIR $?
 	fi
 	cd ..
 }
@@ -79,4 +91,17 @@ else
 		i=${i/\/.git\//}
 		doit $i "$@"
 	done
+fi
+
+echo ""
+if [ -n "$SUCCESSFUL" ]
+then
+	green "# Succeeded:"
+	echo $SUCCESSFUL
+fi
+echo ""
+if [ -n "$FAILED" ]
+then
+	red "# Failed:"
+	echo $FAILED
 fi

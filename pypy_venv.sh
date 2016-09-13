@@ -10,13 +10,29 @@ cd $DIR
 mkdir -p pypy
 cd pypy
 
-# get pypy
-[ ! -e pypy-2.6.0-linux64 ] && wget https://bitbucket.org/pypy/pypy/downloads/pypy-2.6.0-linux64.tar.bz2 --local-encoding=utf-8 -O - | tar xvj
+
+if [ -f "/etc/arch-release" ]; then
+    echo "This is an arch distro"
+    ARCH=$(uname -m)
+    VERSION=${2-pypy-5.3.1-1-$ARCH}
+    # get pypy
+    [ ! -e $VERSION.pkg.tar.xz ] && wget https://mirrors.kernel.org/archlinux/community/os/$ARCH/$VERSION.pkg.tar.xz
+    if [ ! -e $VERSION ]; then
+        tar xf $VERSION.pkg.tar.xz
+        mv ./opt/pypy ./$VERSION
+    fi
+else
+    VERSION=${2-pypy2-v5.3.1-linux64}
+
+    # get pypy
+    [ ! -e $VERSION ] && wget https://bitbucket.org/pypy/pypy/downloads/$VERSION.tar.bz2 --local-encoding=utf-8 -O - | tar xj
+fi
+
 
 # virtualenv
 set +e
 source /etc/bash_completion.d/virtualenvwrapper
-mkvirtualenv -p $PWD/pypy-2.6.0-linux64/bin/pypy $NAME
+mkvirtualenv -p $PWD/$VERSION/bin/pypy $NAME
 set -e
 pip install -U setuptools
 
